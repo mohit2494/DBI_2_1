@@ -15,16 +15,6 @@ void* BigQ :: Driver(void *p){
 
 void BigQ :: Phase1()
 {
-	cout <<"Phase2";
-
-}
-
-void BigQ :: Phase2()
-{
-  cout <<"Phase2";
-}
-BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
-
 	Record tRec;
 	Page tPage;
 	Run tRun(runlen);
@@ -61,11 +51,18 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 	}
 
 
-    // construct priority queue over sorted runs and dump sorted data
+}
 
-	// insert into the out pipe
-
-    // finally shut down the out pipe
+void BigQ :: Phase2()
+{
+  cout <<"Phase2";
+}
+BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
+	myThreadData.in = &in;
+  myThreadData.out = &out;
+  myThreadData.sortorder = &sortorder;
+  myThreadData.runlen = runlen;
+  pthread_create(&myThread, NULL, BigQ::Driver,this);
 	out.ShutDown ();
 }
 
