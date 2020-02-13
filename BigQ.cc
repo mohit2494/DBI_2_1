@@ -1,6 +1,8 @@
 #include "BigQ.h"
 #include <vector>
+#include <algorithm>
 
+using namespace std;
 
 // ------------------------------------------------------------------
 void* BigQ :: Driver(void *p){
@@ -22,7 +24,6 @@ void BigQ :: Phase1()
 			if (tRun.checkRunFull()) {
 				tRun.sortRunInternalPages();
 				myTree->Inititate(tRun.getPages());
-
 				tRun.clearPages();
 			}
 			tRun.AddPage(tPage);
@@ -72,6 +73,10 @@ BigQ::~BigQ () {
 
 
 // ------------------------------------------------------------------
+struct recordComparator {
+  bool operator() (int i,int j) { return (i<j);}
+} myobject;
+
 Run::Run(int runlen) {
 	this->runLength = runlen;
 }
@@ -79,7 +84,9 @@ void Run::AddPage(Page p) {
 	this->pages.push_back(p);
 }
 void Run::sortRunInternalPages() {
-
+	for(int i=0; i < pages.size(); i++) {
+		
+	}
 }
 vector<Page> Run::getPages() {
 	return this->pages;
@@ -93,6 +100,17 @@ bool Run::clearPages() {
 int Run::getRunSize() {
 	return this->pages.size();
 }
+
+Page sortSinglePage(Page p) {
+	vector<Record> records;
+	Record temp;
+	while(p.getNumRecs()>0) {
+		p.GetFirst(&temp);
+		records.push_back(temp);
+	}
+	std::sort(records.begin(), records.end(), );
+}
+
 // ------------------------------------------------------------------
 
 

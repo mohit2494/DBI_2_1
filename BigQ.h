@@ -88,6 +88,8 @@ class Run {
 		bool clearPages();
 		int getRunSize();
 		vector<Page> getPages();
+		Page sortSinglePage(Page p);
+		bool customRecordComparator(Record &left, Record &right);
 };
 // ------------------------------------------------------------------
 #endif
