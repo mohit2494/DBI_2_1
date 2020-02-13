@@ -1,12 +1,34 @@
 #include "BigQ.h"
 #include <vector>
 
+
+
+// ------------------------------------------
+
+void* BigQ :: Driver(void *p){
+  BigQ * ptr = (BigQ*) p;
+  ptr->Phase1();
+  ptr->Phase2();
+
+}
+
+
+void BigQ :: Phase1()
+{
+	cout <<"Phase2";
+
+}
+
+void BigQ :: Phase2()
+{
+  cout <<"Phase2";
+}
 BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
-	
+
 	Record tRec;
 	Page tPage;
 	Run tRun(runlen);
-	
+
 	// read data from in pipe sort them into runlen pages
 	while(in.Remove(&tRec)) {
 		if(!tPage.Append(&tRec)) {
@@ -20,13 +42,13 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 			tPage.Append(&tRec);
 		}
 	}
-	
+
 	if(tPage.getNumRecs()>0) {
 		if (tRun.checkRunFull()) {
 			tRun.sortRun();
 			tRun.clearPages();
 		}
-		
+
 		tRun.AddPage(tPage);
 		tRun.sortRun();
 		// TODO:: write run to file
@@ -39,8 +61,8 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 	}
 
 
-    // construct priority queue over sorted runs and dump sorted data 
-	
+    // construct priority queue over sorted runs and dump sorted data
+
 	// insert into the out pipe
 
     // finally shut down the out pipe
@@ -49,6 +71,12 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 
 BigQ::~BigQ () {
 }
+
+// ------------------------------------------
+
+
+
+
 
 // ------------------------------------------
 Run::Run(int runlen) {
