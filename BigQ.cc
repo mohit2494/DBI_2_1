@@ -2,9 +2,7 @@
 #include <vector>
 
 
-
-// ------------------------------------------
-
+// ------------------------------------------------------------------
 void* BigQ :: Driver(void *p){
   BigQ * ptr = (BigQ*) p;
   ptr->Phase1();
@@ -12,19 +10,19 @@ void* BigQ :: Driver(void *p){
 
 }
 
-
 void BigQ :: Phase1()
 {
 	Record tRec;
 	Page tPage;
-	Run tRun(runlen);
-
+	Run tRun(this->myThreadData.runlen);
+	
 	// read data from in pipe sort them into runlen pages
-	while(in.Remove(&tRec)) {
+	while(this->myThreadData.in->Remove(&tRec)) {
 		if(!tPage.Append(&tRec)) {
 			if (tRun.checkRunFull()) {
-				tRun.sortRun();
-				// TODO:: write run to file
+				tRun.sortRunInternalPages();
+				myTree->Inititate(tRun.getPages());
+				
 				tRun.clearPages();
 			}
 			tRun.AddPage(tPage);
@@ -35,56 +33,53 @@ void BigQ :: Phase1()
 
 	if(tPage.getNumRecs()>0) {
 		if (tRun.checkRunFull()) {
-			tRun.sortRun();
+			tRun.sortRunInternalPages();
 			tRun.clearPages();
 		}
 
 		tRun.AddPage(tPage);
-		tRun.sortRun();
+		tRun.sortRunInternalPages();
 		// TODO:: write run to file
 		tPage.EmptyItOut();
 	}
 	else if(tRun.getRunSize()!=0) {
-		tRun.sortRun();
+		tRun.sortRunInternalPages();
 		// TODO:: write run to file
 		tRun.clearPages();
 	}
-
-
 }
 
+// sort runs from file using Run Manager
 void BigQ :: Phase2()
 {
   cout <<"Phase2";
 }
+
+// constructor
 BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 	myThreadData.in = &in;
-  myThreadData.out = &out;
-  myThreadData.sortorder = &sortorder;
-  myThreadData.runlen = runlen;
-  pthread_create(&myThread, NULL, BigQ::Driver,this);
+	myThreadData.out = &out;
+	myThreadData.sortorder = &sortorder;
+	myThreadData.runlen = runlen;
+	pthread_create(&myThread, NULL, BigQ::Driver,this);
 	out.ShutDown ();
 }
 
+// destructor
 BigQ::~BigQ () {
 }
-
-// ------------------------------------------
-
+// ------------------------------------------------------------------
 
 
-
-
-// ------------------------------------------
+// ------------------------------------------------------------------
 Run::Run(int runlen) {
 	this->runLength = runlen;
 }
 void Run::AddPage(Page p) {
 	this->pages.push_back(p);
 }
-void Run::sortRun() {
-	// sort pages
-	// insert pages into tournament
+void Run::sortRunInternalPages() {
+	
 }
 vector<Page> Run::getPages() {
 	return this->pages;
@@ -98,4 +93,4 @@ bool Run::clearPages() {
 int Run::getRunSize() {
 	return this->pages.size();
 }
-//------------------------------------------
+// ------------------------------------------------------------------

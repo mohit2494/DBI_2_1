@@ -12,24 +12,16 @@
 #include "DBFile.h"
 using namespace std;
 
-// Wrapper for threaddata
 // ------------------------------------------------------------------
-
 typedef struct {
     Pipe * in;
     Pipe * out;
     OrderMaker * sortorder;
     int runlen;
 } ThreadData;
-
 // ------------------------------------------------------------------
 
-
-
-
 // ------------------------------------------------------------------
-
-
 class TreeComparator{
     ComparisonEngine myComparisonEngine;
     OrderMaker * myOrderMaker;
@@ -37,12 +29,9 @@ public:
     TreeComparator(OrderMaker &sortorder);
     bool operator()(const Record & lhs, const Record &rhs);
 };
-
 // ------------------------------------------------------------------
 
 // ------------------------------------------------------------------
-
-
 class RunManager{
     DBFile * myFile;
     int noOfRuns;
@@ -53,15 +42,9 @@ public:
     vector<Page *> getPagesForSorting();
     Page * getNextPageOfRun(int runNo,int pageOffset);
 };
-
 // ------------------------------------------------------------------
 
-
-
-
-
 // ------------------------------------------------------------------
-
 class TournamentTree{
     OrderMaker myOrderMaker;
     RunManager myRunManager;
@@ -74,13 +57,7 @@ public:
     void EmptyPages();
     Page* GetSortedPage();
 };
-
-
 // ------------------------------------------------------------------
-
-
-
-
 
 // ------------------------------------------------------------------
 class BigQ {
@@ -93,11 +70,11 @@ class BigQ {
 	 void Phase1();
 	 void Phase2();
 public:
+	static void* Driver(void*);
 	BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
 	~BigQ ();
 };
 // ------------------------------------------------------------------
-
 
 // ------------------------------------------------------------------
 class Run {
@@ -106,12 +83,11 @@ class Run {
 	public:
 		Run(int runLength);
 		void AddPage(Page p);
-		void sortRun();
+		void sortRunInternalPages();
 		bool checkRunFull();
 		bool clearPages();
 		int getRunSize();
 		vector<Page> getPages();
 };
 // ------------------------------------------------------------------
-
 #endif
