@@ -15,14 +15,14 @@ void BigQ :: Phase1()
 	Record tRec;
 	Page tPage;
 	Run tRun(this->myThreadData.runlen);
-	
+
 	// read data from in pipe sort them into runlen pages
 	while(this->myThreadData.in->Remove(&tRec)) {
 		if(!tPage.Append(&tRec)) {
 			if (tRun.checkRunFull()) {
 				tRun.sortRunInternalPages();
 				myTree->Inititate(tRun.getPages());
-				
+
 				tRun.clearPages();
 			}
 			tRun.AddPage(tPage);
@@ -79,7 +79,7 @@ void Run::AddPage(Page p) {
 	this->pages.push_back(p);
 }
 void Run::sortRunInternalPages() {
-	
+
 }
 vector<Page> Run::getPages() {
 	return this->pages;
@@ -93,4 +93,66 @@ bool Run::clearPages() {
 int Run::getRunSize() {
 	return this->pages.size();
 }
+// ------------------------------------------------------------------
+
+
+
+// ------------------------------------------------------------------
+TournamentTree :: TournamentTree(OrderMaker &sortorder,Run &run){
+    myOrderMaker = &sortorder;
+    myQueue = new priority_queue<Record,vector<Record>,TreeComparator>(TreeComparator(sortorder));
+    isRunManagerAvailable = false;
+    run.getPages(&myPageVector);
+    Inititate();
+
+}
+
+TournamentTree :: TournamentTree(OrderMaker &sortorder,RunManager &manager){
+    myOrderMaker = &sortorder;
+    myRunManager = &manager;
+    myQueue = new priority_queue<Record,vector<Record>,TreeComparator>(TreeComparator(sortorder));
+    isRunManagerAvailable = true;
+    myRunManager->getPages(&myPageVector);
+    Inititate();
+}
+void TournamentTree :: Inititate(){
+    if (!myPageVector.empty()){
+        int flag = 1;
+        while(flag) {
+            for(vector<Page>::iterator page = myPageVector.begin() ; page!=myPageVector.end() ; ++page){
+                Record tempRecord;
+                if (!page->GetFirst(&tempRecord) && isRunManagerAvailable){
+                    if (myRunManager->getNextPage(page)){
+                        myQueue->push(tempRecord);
+                    }
+                }
+                else{
+                    myQueue->push(tempRecord);
+                }
+            }
+            Record r = myQueue->top();
+            myQueue->pop();
+
+            if (OutputBuffer.Append(&r) || !myQueue->empty()){
+                flag = 0;
+            }
+
+        }
+    }
+
+}
+
+bool TournamentTree :: GetSortedPage(Page &page){
+    Record temp;
+    bool isOutputBufferEmpty = true;
+    while(OutputBuffer.GetFirst(&temp)){
+        page.Append(&temp);
+        isOutputBufferEmpty = false;
+    }
+    if(isOutputBufferEmpty){
+        return 0;
+    }
+    return 1;
+}
+
 // ------------------------------------------------------------------

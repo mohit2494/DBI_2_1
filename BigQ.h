@@ -46,16 +46,16 @@ public:
 
 // ------------------------------------------------------------------
 class TournamentTree{
-    OrderMaker myOrderMaker;
-    RunManager myRunManager;
+    OrderMaker * myOrderMaker;
+    RunManager * myRunManager;
+    vector<Page> myPageVector;
     Page OutputBuffer;
+    bool isRunManagerAvailable;
     priority_queue<Record,vector<Record>,TreeComparator> * myQueue;
+    void Inititate();
 public:
-    TournamentTree(OrderMaker &sortorder);
     TournamentTree(OrderMaker &sortorder,RunManager &manager);
-    void Inititate(vector<Page> pages);
-    void EmptyPages();
-    Page* GetSortedPage();
+    bool GetSortedPage(Page &p);
 };
 // ------------------------------------------------------------------
 
