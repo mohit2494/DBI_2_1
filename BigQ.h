@@ -56,13 +56,20 @@ public:
 // ------------------------------------------------------------------
 
 // ------------------------------------------------------------------
+typedef struct{
+    int startPage;
+    int currentPage;
+    int endPage;
+    int runId;
+} RunFileObject;
 class RunManager{
-    DBFile * myFile;
     int noOfRuns;
     int runLength;
-    vector <Page> pages;
-    vector <int> fileDescriptors;
+    File file;
+    char * f_path;
+    unordered_map<int,RunFileObject> runLocation;
 public:
+    RunManager(int noOfRuns,int runLength,char * f_path);
     void getPages(vector<Page> * myPageVector);
     bool getNextPageOfRun(Page * page,int runNo,int pageOffset);
 };

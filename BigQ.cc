@@ -195,10 +195,57 @@ bool TournamentTree :: GetSortedPage(Page &page){
 
 
 // ------------------------------------------------------------------
+RunManager :: RunManager(int noOfRuns,int runLength,int totalPages,char * f_path){
+    this->noOfRuns = noOfRuns;
+    this->runLength = runLength;
+    this->totalPages = totalPages;
+    this->f_path = f_path
+    this->file.Open(1,this->f_path);
+    int pageOffset = 0;
+    for(int i = 0; i<noOfRuns;i++){
+        RunFileObject fileObject;
+        fileObject.startPage = pageOffset;
+        fileObject.currentPage = startPage;
+        pageOffset+=runLength;
+        if (pageOffset <= totalPages){
+            fileObject.endPage = pageOffset;
+        }
+        else{
+            fileObject.endPage = pageOffset - (pageOffset-totalPages - 1 );
+        }
+        runLocation.insert({i,fileObject})
+    }
+
+}
+
 void  RunManager:: getPages(vector<Page> * myPageVector){
-};
-bool RunManager :: getNextPageOfRun(Page * page,int runNo,int pageOffset){
-};
+    for(int i = 0; i< noOfRuns ; i++){
+        unordered_map<int,RunFileObject> const_iterator runGetter = runLocation.find(i);
+        if(!runGetter == runLocation.end()){
+            Page tempPage;
+            this->file.GetPage(&tempPage,runGetter->second->currentPage)
+            runGetter->second->currentPage+=1
+            if(runGetter->second->currentPage>runGetter->second->endPage){
+                runLocation.erase(i);
+            }
+            myPageVector.push_back(tempPage);
+        }
+    }
+}
+
+bool RunManager :: getNextPageOfRun(Page * page,int runNo){
+
+    unordered_map<int,RunFileObject> const_iterator runGetter = runLocation.find(runNo);
+    if(!runGetter == runLocation.end()){
+        this->file.GetPage(page,runGetter->second->currentPage)
+        runGetter->second->currentPage+=1
+        if(runGetter->second->currentPage>runGetter->second->endPage){
+            runLocation.erase(i);
+        }
+        return true;
+    }
+    return false
+}
 // ------------------------------------------------------------------
 
 
