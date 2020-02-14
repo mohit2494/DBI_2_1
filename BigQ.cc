@@ -10,7 +10,7 @@ void* BigQ :: Driver(void *p){
 }
 void BigQ :: Phase1()
 {
-    
+
     Record tRec;
     Page *tPage = new Page();                                           // for allocating memory to page
     Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);   // intializing run
@@ -24,6 +24,7 @@ void BigQ :: Phase1()
                 tRun.clearPages();
             }
             tRun.AddPage(tPage);
+            delete tPage;
             tPage = new Page();
             tPage->Append(&tRec);
         }
@@ -106,7 +107,7 @@ int Run::getRunSize() {
 
 void Run::sortSinglePage(Page *p) {
     if (sortorder){
-        vector<Record *> records;
+        vector<Record*> records;
         int numRecs = p->getNumRecs();
         for(int i=0; i<numRecs; i++) {
             records.push_back(new Record());
@@ -194,6 +195,7 @@ CustomComparator :: CustomComparator(OrderMaker * sortorder){
     this->myOrderMaker = sortorder;
 }
 bool CustomComparator :: operator ()( Record* lhs,  Record* rhs){
-    return myComparisonEngine.Compare(lhs,rhs,myOrderMaker);
+    int val = myComparisonEngine.Compare(lhs,rhs,myOrderMaker);
+    return (val <=0)? true : false;
 }
 // ------------------------------------------------------------------
