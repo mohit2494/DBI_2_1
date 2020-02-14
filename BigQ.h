@@ -40,6 +40,7 @@ class Run {
         void getPages(vector<Page> * pagevector);
         void sortSinglePage(Page *p);
         bool customRecordComparator(Record &left, Record &right);
+        bool writeRunToFile(DBFile *file);
 };
 // ------------------------------------------------------------------
 

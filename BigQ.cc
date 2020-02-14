@@ -1,4 +1,5 @@
 #include "BigQ.h"
+#include "Utilities.h"
 using namespace std;
 
 // ------------------------------------------------------------------
@@ -19,8 +20,9 @@ void BigQ :: Phase1()
     while(this->myThreadData.in->Remove(&tRec)) {
         if(!tPage->Append(&tRec)) {
             if (tRun.checkRunFull()) {
-                tRun.sortRunInternalPages();
+                // tRun.sortRunInternalPages();
                 myTree = new TournamentTree(&tRun,this->myThreadData.sortorder);
+                tRun.writeRunToFile(&this->myFile);
                 tRun.clearPages();
             }
             tRun.AddPage(tPage);
@@ -31,15 +33,17 @@ void BigQ :: Phase1()
     }
     if(tPage->getNumRecs()>0) {
         if (tRun.checkRunFull()) {
-            tRun.sortRunInternalPages();
+            // tRun.sortRunInternalPages();
             tRun.clearPages();
         }
         tRun.AddPage(tPage);
-        tRun.sortRunInternalPages();
+        // tRun.sortRunInternalPages();
+        tRun.writeRunToFile(&this->myFile);
         delete tPage; // delete pointer
     }
     else if(tRun.getRunSize()!=0) {
-        tRun.sortRunInternalPages();
+        // tRun.sortRunInternalPages();
+        tRun.writeRunToFile(&this->myFile);
         tRun.clearPages();
     }
 }
@@ -68,10 +72,6 @@ BigQ::~BigQ () {
 
 
 // ------------------------------------------------------------------
-struct recordComparator {
-  bool operator() (int i,int j) { return (i<j);}
-} myobject;
-
 Run::Run(int runlen) {
     this->runLength = runlen;
     this->sortorder = NULL;
@@ -104,7 +104,6 @@ bool Run::clearPages() {
 int Run::getRunSize() {
     return this->pages.size();
 }
-
 void Run::sortSinglePage(Page *p) {
     if (sortorder){
         vector<Record*> records;
@@ -116,13 +115,27 @@ void Run::sortSinglePage(Page *p) {
         sort(records.begin(), records.end(), CustomComparator(this->sortorder));
         for(int i=0; i<records.size();i++) {
             Record *t = records.at(i);
-            t->Print(new Schema("catalog","nation"));
+            t->Print(new Schema("catalog","lineitem"));
             p->Append(t);
         }
     }
 }
+bool Run::writeRunToFile(DBFile *file) {
+    //TODO::change second parameter to sorted
+    //TODO::handle create for this
+    if(!Utilities::checkfileExist("dbfiles/temp.bin")) {
+        file->Create("dbfiles/temp.bin",heap,NULL);
+    }
+    file->Open("dbfiles/temp.bin");
+    for(int i=0;i<this->pages.size();i++) {
+        Record temp;
+        while(pages.at(i)->GetFirst(&temp)) {
+            file->Add(temp);
+        }
+    }
+    file->Close();
+}
 // ------------------------------------------------------------------
-
 
 // ------------------------------------------------------------------
 TournamentTree :: TournamentTree(Run * run,OrderMaker * sortorder){
@@ -133,7 +146,6 @@ TournamentTree :: TournamentTree(Run * run,OrderMaker * sortorder){
     Inititate();
 
 }
-
 TournamentTree :: TournamentTree(RunManager * manager,OrderMaker * sortorder){
     myOrderMaker = sortorder;
     myRunManager = manager;
