@@ -1,5 +1,4 @@
 #include "BigQ.h"
-
 using namespace std;
 
 // ------------------------------------------------------------------
@@ -11,38 +10,35 @@ void* BigQ :: Driver(void *p){
 }
 void BigQ :: Phase1()
 {
+    
     Record tRec;
-    Page tPage;
-    Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);
+    Page *tPage = new Page();                                           // for allocating memory to page
+    Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);   // intializing run
 
     // read data from in pipe sort them into runlen pages
     while(this->myThreadData.in->Remove(&tRec)) {
-        if(!tPage.Append(&tRec)) {
+        if(!tPage->Append(&tRec)) {
             if (tRun.checkRunFull()) {
                 tRun.sortRunInternalPages();
                 myTree = new TournamentTree(&tRun,this->myThreadData.sortorder);
                 tRun.clearPages();
             }
             tRun.AddPage(tPage);
-            tPage.EmptyItOut();
-            tPage.Append(&tRec);
+            tPage = new Page();
+            tPage->Append(&tRec);
         }
     }
-
-    if(tPage.getNumRecs()>0) {
+    if(tPage->getNumRecs()>0) {
         if (tRun.checkRunFull()) {
             tRun.sortRunInternalPages();
             tRun.clearPages();
         }
-
         tRun.AddPage(tPage);
         tRun.sortRunInternalPages();
-        // TODO:: write run to file
-        tPage.EmptyItOut();
+        delete tPage; // delete pointer
     }
     else if(tRun.getRunSize()!=0) {
         tRun.sortRunInternalPages();
-        // TODO:: write run to file
         tRun.clearPages();
     }
 }
@@ -60,6 +56,7 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
     myThreadData.sortorder = &sortorder;
     myThreadData.runlen = runlen;
     pthread_create(&myThread, NULL, BigQ::Driver,this);
+    pthread_join(myThread, NULL);
     out.ShutDown ();
 }
 
@@ -83,7 +80,7 @@ Run::Run(int runlen,OrderMaker * sortorder) {
     this->runLength = runlen;
     this->sortorder = sortorder;
 }
-void Run::AddPage(Page p) {
+void Run::AddPage(Page *p) {
     this->pages.push_back(p);
 }
 void Run::sortRunInternalPages() {
@@ -91,11 +88,11 @@ void Run::sortRunInternalPages() {
         this->sortSinglePage(pages.at(i));
     }
 }
-vector<Page> Run::getPages() {
+vector<Page*> Run::getPages() {
     return this->pages;
 }
 void Run::getPages(vector<Page> * myPageVector) {
-    myPageVector->swap(this->pages);
+    // myPageVector->swap(this->pages);
 }
 bool Run::checkRunFull() {
     return this->pages.size() == this->runLength;
@@ -107,26 +104,29 @@ int Run::getRunSize() {
     return this->pages.size();
 }
 
-Page Run::sortSinglePage(Page p) {
+void Run::sortSinglePage(Page *p) {
     if (sortorder){
-        vector<Record> records;
-        Record temp;
-        while(p.getNumRecs()>0) {
-            p.GetFirst(&temp);
-            records.push_back(temp);
+        vector<Record *> records;
+        int numRecs = p->getNumRecs();
+        for(int i=0; i<numRecs; i++) {
+            records.push_back(new Record());
+            p->GetFirst(records.at(i));
         }
         sort(records.begin(), records.end(), CustomComparator(this->sortorder));
+        for(int i=0; i<records.size();i++) {
+            Record *t = records.at(i);
+            t->Print(new Schema("catalog","nation"));
+            p->Append(t);
+        }
     }
 }
-
 // ------------------------------------------------------------------
-
 
 
 // ------------------------------------------------------------------
 TournamentTree :: TournamentTree(Run * run,OrderMaker * sortorder){
     myOrderMaker = sortorder;
-    myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
+    // myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
     isRunManagerAvailable = false;
     run->getPages(&myPageVector);
     Inititate();
@@ -136,7 +136,7 @@ TournamentTree :: TournamentTree(Run * run,OrderMaker * sortorder){
 TournamentTree :: TournamentTree(RunManager * manager,OrderMaker * sortorder){
     myOrderMaker = sortorder;
     myRunManager = manager;
-    myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
+    // myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
     isRunManagerAvailable = true;
     myRunManager->getPages(&myPageVector);
     Inititate();
@@ -149,23 +149,21 @@ void TournamentTree :: Inititate(){
                 Record tempRecord;
                 if (!page->GetFirst(&tempRecord) && isRunManagerAvailable){
                     if (myRunManager->getNextPageOfRun(&(*page),0,0)){
-                        myQueue->push(tempRecord);
+                        // myQueue->push(tempRecord);
                     }
                 }
                 else{
-                    myQueue->push(tempRecord);
+                    // myQueue->push(tempRecord);
                 }
             }
             Record r = myQueue->top();
-            myQueue->pop();
+            // myQueue->pop();
 
             if (OutputBuffer.Append(&r) || !myQueue->empty()){
                 flag = 0;
             }
-
         }
     }
-
 }
 
 bool TournamentTree :: GetSortedPage(Page &page){
@@ -180,26 +178,22 @@ bool TournamentTree :: GetSortedPage(Page &page){
     }
     return 1;
 }
-
 // ------------------------------------------------------------------
 
 
-
-
+// ------------------------------------------------------------------
 void  RunManager:: getPages(vector<Page> * myPageVector){
-
 };
 bool RunManager :: getNextPageOfRun(Page * page,int runNo,int pageOffset){
-
 };
-
-
 // ------------------------------------------------------------------
 
 
+// ------------------------------------------------------------------
 CustomComparator :: CustomComparator(OrderMaker * sortorder){
     this->myOrderMaker = sortorder;
 }
-bool CustomComparator :: operator ()( Record & lhs,  Record &rhs){
-    return myComparisonEngine.Compare(&lhs,&rhs,myOrderMaker);
+bool CustomComparator :: operator ()( Record* lhs,  Record* rhs){
+    return myComparisonEngine.Compare(lhs,rhs,myOrderMaker);
 }
+// ------------------------------------------------------------------

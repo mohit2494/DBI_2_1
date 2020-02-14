@@ -27,18 +27,18 @@ typedef struct {
 class Run {
     int runLength;
     OrderMaker * sortorder;
-    vector <Page> pages;
+    vector <Page *> pages;
     public:
         Run(int runLength);
         Run(int runLength,OrderMaker * sortorder);
-        void AddPage(Page p);
+        void AddPage(Page *p);
         void sortRunInternalPages();
         bool checkRunFull();
         bool clearPages();
         int getRunSize();
-        vector<Page> getPages();
+        vector<Page*> getPages();
         void getPages(vector<Page> * pagevector);
-        Page sortSinglePage(Page p);
+        void sortSinglePage(Page *p);
         bool customRecordComparator(Record &left, Record &right);
 };
 // ------------------------------------------------------------------
@@ -50,7 +50,7 @@ class CustomComparator{
     OrderMaker * myOrderMaker;
 public:
     CustomComparator(OrderMaker * sortorder);
-    bool operator()( Record & lhs,  Record &rhs);
+    bool operator()( Record* lhs,  Record* rhs);
 };
 // ------------------------------------------------------------------
 
