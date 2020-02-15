@@ -15,6 +15,18 @@ using namespace std;
 
 
 // ------------------------------------------------------------------
+typedef struct{
+    int startPage;
+    int currentPage;
+    int endPage;
+    int runId;
+} RunFileObject;
+
+typedef struct{
+    int runId;
+    Record * record;
+} QueueObject;
+
 typedef struct {
     Pipe * in;
     Pipe * out;
@@ -37,7 +49,7 @@ class Run {
         bool clearPages();
         int getRunSize();
         vector<Page*> getPages();
-        void getPages(vector<Page> * pagevector);
+        void getPages(vector<Page*> * pagevector);
         void sortSinglePage(Page *p);
         bool customRecordComparator(Record &left, Record &right);
         bool writeRunToFile(DBFile *file);
@@ -52,42 +64,41 @@ class CustomComparator{
 public:
     CustomComparator(OrderMaker * sortorder);
     bool operator()( Record* lhs,  Record* rhs);
+    bool operator()( QueueObject lhs,  QueueObject rhs);
+
 };
 // ------------------------------------------------------------------
 
 // ------------------------------------------------------------------
-typedef struct{
-    int startPage;
-    int currentPage;
-    int endPage;
-    int runId;
-} RunFileObject;
 class RunManager{
     int noOfRuns;
     int runLength;
+    int totalPages;
     File file;
     char * f_path;
     unordered_map<int,RunFileObject> runLocation;
 public:
-    RunManager(int noOfRuns,int runLength,char * f_path);
-    void getPages(vector<Page> * myPageVector);
-    bool getNextPageOfRun(Page * page,int runNo,int pageOffset);
+    RunManager(int noOfRuns,int runLength,int totalPages,char * f_path);
+    void getPages(vector<Page*> * myPageVector);
+    bool getNextPageOfRun(Page * page,int runNo);
 };
 // ------------------------------------------------------------------
 
 // ------------------------------------------------------------------
+
 class TournamentTree{
     OrderMaker * myOrderMaker;
     RunManager * myRunManager;
-    vector<Page> myPageVector;
+    vector<Page*> myPageVector;
     Page OutputBuffer;
     bool isRunManagerAvailable;
-    priority_queue<Record,vector<Record>,CustomComparator> * myQueue;
+    priority_queue<QueueObject,vector<QueueObject>,CustomComparator> * myQueue;
     void Inititate();
 public:
     TournamentTree(Run * run,OrderMaker * sortorder);
     TournamentTree(RunManager * manager,OrderMaker * sortorder);
-    bool GetSortedPage(Page &p);
+    void RefillOutputBuffer();
+    bool GetSortedPage(Page * *p);
 };
 // ------------------------------------------------------------------
 

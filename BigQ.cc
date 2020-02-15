@@ -51,7 +51,22 @@ void BigQ :: Phase1()
 // sort runs from file using Run Manager
 void BigQ :: Phase2()
 {
-  cout <<"Phase2";
+  int noOfRuns = 2;
+      int runLength = 2;
+      int totalPages = 3;
+      char * f_path = "../../dbfiles/part.bin";
+      RunManager runManager(noOfRuns,runLength,totalPages,f_path);
+      myTree = new TournamentTree(&runManager,this->myThreadData.sortorder);
+      Page * tempPage;
+      while(myTree->GetSortedPage(&tempPage)){
+          Record tempRecord;
+          while(tempPage->GetFirst(&tempRecord)){
+              Schema s("catalog","part");
+              tempRecord.Print(&s);
+              this->myThreadData.out->Insert(&tempRecord);
+          }
+          myTree->RefillOutputBuffer();
+      }
 }
 
 // constructor
@@ -92,7 +107,7 @@ void Run::sortRunInternalPages() {
 vector<Page*> Run::getPages() {
     return this->pages;
 }
-void Run::getPages(vector<Page> * myPageVector) {
+void Run::getPages(vector<Page*> * myPageVector) {
     // myPageVector->swap(this->pages);
 }
 bool Run::checkRunFull() {
@@ -140,56 +155,105 @@ bool Run::writeRunToFile(DBFile *file) {
 // ------------------------------------------------------------------
 TournamentTree :: TournamentTree(Run * run,OrderMaker * sortorder){
     myOrderMaker = sortorder;
-    // myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
+    if (myQueue){
+        delete myQueue;
+    }
+    myQueue = new priority_queue<QueueObject,vector<QueueObject>,CustomComparator>(CustomComparator(sortorder));
     isRunManagerAvailable = false;
     run->getPages(&myPageVector);
     Inititate();
 
 }
+
 TournamentTree :: TournamentTree(RunManager * manager,OrderMaker * sortorder){
     myOrderMaker = sortorder;
     myRunManager = manager;
-    // myQueue = new priority_queue<Record,vector<Record>,CustomComparator>(CustomComparator(sortorder));
+    if (myQueue == NULL){
+        delete myQueue;
+    }
+    myQueue = new priority_queue<QueueObject,vector<QueueObject>,CustomComparator>(CustomComparator(sortorder));
     isRunManagerAvailable = true;
     myRunManager->getPages(&myPageVector);
     Inititate();
 }
 void TournamentTree :: Inititate(){
+    Schema s("catalog","part");
     if (!myPageVector.empty()){
-        int flag = 1;
-        while(flag) {
-            for(vector<Page>::iterator page = myPageVector.begin() ; page!=myPageVector.end() ; ++page){
-                Record tempRecord;
-                if (!page->GetFirst(&tempRecord) && isRunManagerAvailable){
-                    if (myRunManager->getNextPageOfRun(&(*page),0,0)){
-                        // myQueue->push(tempRecord);
+        int runId = 0;
+        for(vector<Page*>::iterator i = myPageVector.begin() ; i!=myPageVector.end() ; ++i){
+            Page * page = *(i);
+            QueueObject object;
+            object.record = new Record();
+            object.runId = runId++;
+            if(page->GetFirst(object.record)){
+                myQueue->push(object);
+            }
+        }
+
+        while(!myQueue->empty()){
+            QueueObject topObject = myQueue->top();
+            bool OutputBufferFull = !(OutputBuffer.Append(topObject.record));
+            if (OutputBufferFull){
+                break;
+            }
+            myQueue->pop();
+            Page * topPage = myPageVector.at(topObject.runId);
+            if (!(topPage->GetFirst(topObject.record))){
+                if (myRunManager->getNextPageOfRun(topPage,topObject.runId)){
+                    if(topPage->GetFirst(topObject.record)){
+                        myQueue->push(topObject);
                     }
                 }
-                else{
-                    // myQueue->push(tempRecord);
+            }
+            else{
+                myQueue->push(topObject);
+            }
+
+        }
+
+    }
+}
+
+void TournamentTree :: RefillOutputBuffer(){
+    Schema s("catalog","part");
+    if (!myPageVector.empty()){
+        int runId = 0;
+        while(!myQueue->empty()){
+            QueueObject topObject = myQueue->top();
+            bool OutputBufferFull = !(OutputBuffer.Append(topObject.record));
+            if (OutputBufferFull){
+                break;
+            }
+            myQueue->pop();
+
+            Page * topPage = myPageVector.at(topObject.runId);
+            if (!(topPage->GetFirst(topObject.record))){
+                if (myRunManager->getNextPageOfRun(topPage,topObject.runId)){
+                    if(topPage->GetFirst(topObject.record)){
+//                        topObject.record->Print(&s);
+//                        cout<<topObject.runId;
+                        myQueue->push(topObject);
+                    }
                 }
             }
-            Record r = myQueue->top();
-            // myQueue->pop();
-
-            if (OutputBuffer.Append(&r) || !myQueue->empty()){
-                flag = 0;
+            else{
+//                topObject.record->Print(&s);
+//                cout<<topObject.runId;
+                myQueue->push(topObject);
             }
+
         }
     }
 }
 
-bool TournamentTree :: GetSortedPage(Page &page){
-    Record temp;
-    bool isOutputBufferEmpty = true;
-    while(OutputBuffer.GetFirst(&temp)){
-        page.Append(&temp);
-        isOutputBufferEmpty = false;
+
+
+bool TournamentTree :: GetSortedPage(Page ** page){
+    if (OutputBuffer.getNumRecs()>0){
+        *(page) = &OutputBuffer;
+        return 1;
     }
-    if(isOutputBufferEmpty){
-        return 0;
-    }
-    return 1;
+    return 0;
 }
 // ------------------------------------------------------------------
 
@@ -199,52 +263,53 @@ RunManager :: RunManager(int noOfRuns,int runLength,int totalPages,char * f_path
     this->noOfRuns = noOfRuns;
     this->runLength = runLength;
     this->totalPages = totalPages;
-    this->f_path = f_path
+    this->f_path = f_path;
     this->file.Open(1,this->f_path);
     int pageOffset = 0;
     for(int i = 0; i<noOfRuns;i++){
         RunFileObject fileObject;
+        fileObject.runId = i;
         fileObject.startPage = pageOffset;
-        fileObject.currentPage = startPage;
+        fileObject.currentPage = fileObject.startPage;
         pageOffset+=runLength;
-        if (pageOffset <= totalPages){
+        if (pageOffset <=totalPages){
             fileObject.endPage = pageOffset;
         }
         else{
-            fileObject.endPage = pageOffset - (pageOffset-totalPages - 1 );
+            fileObject.endPage =  fileObject.startPage + (totalPages-fileObject.startPage-1);
         }
-        runLocation.insert({i,fileObject})
+        runLocation.insert(make_pair(i,fileObject));
     }
 
 }
 
-void  RunManager:: getPages(vector<Page> * myPageVector){
+void  RunManager:: getPages(vector<Page*> * myPageVector){
     for(int i = 0; i< noOfRuns ; i++){
-        unordered_map<int,RunFileObject> const_iterator runGetter = runLocation.find(i);
-        if(!runGetter == runLocation.end()){
-            Page tempPage;
-            this->file.GetPage(&tempPage,runGetter->second->currentPage)
-            runGetter->second->currentPage+=1
-            if(runGetter->second->currentPage>runGetter->second->endPage){
+        unordered_map<int,RunFileObject>::iterator runGetter = runLocation.find(i);
+        if(!(runGetter == runLocation.end())){
+            Page * pagePtr = new Page();
+            this->file.GetPage(pagePtr,runGetter->second.currentPage);
+            runGetter->second.currentPage+=1;
+            if(runGetter->second.currentPage>runGetter->second.endPage){
                 runLocation.erase(i);
             }
-            myPageVector.push_back(tempPage);
+            myPageVector->push_back(pagePtr);
         }
     }
 }
 
 bool RunManager :: getNextPageOfRun(Page * page,int runNo){
-
-    unordered_map<int,RunFileObject> const_iterator runGetter = runLocation.find(runNo);
-    if(!runGetter == runLocation.end()){
-        this->file.GetPage(page,runGetter->second->currentPage)
-        runGetter->second->currentPage+=1
-        if(runGetter->second->currentPage>runGetter->second->endPage){
-            runLocation.erase(i);
+    unordered_map<int,RunFileObject>::iterator runGetter = runLocation.find(runNo);
+    if(!(runGetter == runLocation.end())){
+        cout<<runGetter->second.currentPage<<runGetter->second.endPage;
+        this->file.GetPage(page,runGetter->second.currentPage);
+        runGetter->second.currentPage+=1;
+        if(runGetter->second.currentPage>=runGetter->second.endPage){
+            runLocation.erase(runNo);
         }
         return true;
     }
-    return false
+    return false;
 }
 // ------------------------------------------------------------------
 
@@ -253,6 +318,11 @@ bool RunManager :: getNextPageOfRun(Page * page,int runNo){
 CustomComparator :: CustomComparator(OrderMaker * sortorder){
     this->myOrderMaker = sortorder;
 }
+bool CustomComparator :: operator ()( QueueObject lhs, QueueObject rhs){
+    int val = myComparisonEngine.Compare(lhs.record,rhs.record,myOrderMaker);
+    return (val <=0)? false : true;
+}
+
 bool CustomComparator :: operator ()( Record* lhs,  Record* rhs){
     int val = myComparisonEngine.Compare(lhs,rhs,myOrderMaker);
     return (val <=0)? true : false;
