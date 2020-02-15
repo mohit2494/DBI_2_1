@@ -273,7 +273,7 @@ RunManager :: RunManager(int noOfRuns,int runLength,int totalPages,char * f_path
         fileObject.currentPage = fileObject.startPage;
         pageOffset+=runLength;
         if (pageOffset <=totalPages){
-            fileObject.endPage = pageOffset;
+            fileObject.endPage = pageOffset-1;
         }
         else{
             fileObject.endPage =  fileObject.startPage + (totalPages-fileObject.startPage-1);
@@ -282,6 +282,7 @@ RunManager :: RunManager(int noOfRuns,int runLength,int totalPages,char * f_path
     }
 
 }
+
 
 void  RunManager:: getPages(vector<Page*> * myPageVector){
     for(int i = 0; i< noOfRuns ; i++){
@@ -304,7 +305,7 @@ bool RunManager :: getNextPageOfRun(Page * page,int runNo){
         cout<<runGetter->second.currentPage<<runGetter->second.endPage;
         this->file.GetPage(page,runGetter->second.currentPage);
         runGetter->second.currentPage+=1;
-        if(runGetter->second.currentPage>=runGetter->second.endPage){
+        if(runGetter->second.currentPage>runGetter->second.endPage){
             runLocation.erase(runNo);
         }
         return true;
