@@ -45,6 +45,7 @@ class Run {
         Run(int runLength);
         Run(int runLength,OrderMaker * sortorder);
         void AddPage();
+        void AddPage(Page *p);
         int addRecordAtPage(long long int pageCount, Record *rec);
         void sortRunInternalPages();
         bool checkRunFull();
@@ -116,6 +117,7 @@ class BigQ {
      void Phase1();
      void Phase2();
 public:
+    void sortCompleteRun(Run *r);
     static void* Driver(void*);
     BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
     ~BigQ ();

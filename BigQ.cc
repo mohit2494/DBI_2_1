@@ -13,9 +13,10 @@ void BigQ :: Phase1()
 {
     Record tRec;
     Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);
-
+    
     // add 1 page for adding records
     long long int pageCount=0;
+    long long int runCount=1;
     tRun.AddPage();
 
     // read data from in pipe sort them into runlen pages
@@ -23,9 +24,9 @@ void BigQ :: Phase1()
         if(!tRun.addRecordAtPage(pageCount, &tRec)) {
             if (tRun.checkRunFull()) {
                 tRun.sortRunInternalPages();
-                myTree = new TournamentTree(&tRun,this->myThreadData.sortorder);
+                sortCompleteRun(&tRun);
                 tRun.writeRunToFile(&this->myFile);
-                tRun.clearPages();pageCount=-1;
+                tRun.clearPages();pageCount=-1;runCount++;
             }
             tRun.AddPage();pageCount++;
             tRun.addRecordAtPage(pageCount, &tRec);
@@ -34,18 +35,17 @@ void BigQ :: Phase1()
     if(tRun.getRunSize()!=0) {
         tRun.sortRunInternalPages();
         tRun.writeRunToFile(&this->myFile);
+        runCount++;
         tRun.clearPages();
     }
-
+    this->f_path = "dbfiles/temp.bin";
+    this->totalRuns = runCount;
 }
 
 // sort runs from file using Run Manager
 void BigQ :: Phase2()
 {
-    // int totalRuns = 10;
-    // int runLen = 10;
-    // char * f_path = "../../dbfiles/lineitem.bin";
-    RunManager runManager(this->totalRuns,this->myThreadData.runLen,this->f_path);
+    RunManager runManager(this->totalRuns,this->myThread.runLen,this->f_path);
     myTree = new TournamentTree(&runManager,this->myThreadData.sortorder);
     Page * tempPage;
     while(myTree->GetSortedPage(&tempPage)){
@@ -58,6 +58,24 @@ void BigQ :: Phase2()
         myTree->RefillOutputBuffer();
     }
 
+}
+
+void BigQ::sortCompleteRun(Run *run) {
+    myTree = new TournamentTree(run,this->myThreadData.sortorder);
+    Page * tempPage;
+    char *bits;
+    // as run was swapped by tournament tree
+    // we need to allocate space for pages again
+    // these pages will be part of complete sorted run
+    // add 1 page for adding records
+    Page pushPage;
+    while(myTree->GetSortedPage(&tempPage)){
+        tempPage->ToBinary(bits);
+        pushPage.FromBinary(bits);
+        run->AddPage(&pushPage);
+        tempPage->EmptyItOut();
+        myTree->RefillOutputBuffer();
+    }
 }
 
 // constructor
@@ -87,6 +105,9 @@ Run::Run(int runlen,OrderMaker * sortorder) {
 }
 void Run::AddPage() {
     this->pages.push_back(new Page());
+}
+void Run::AddPage(Page *p) {
+    this->pages.push_back(p);
 }
 void Run::sortRunInternalPages() {
     for(int i=0; i < pages.size(); i++) {
@@ -251,7 +272,7 @@ bool TournamentTree :: GetSortedPage(Page ** page){
 
 
 // ------------------------------------------------------------------
-unManager :: RunManager(int noOfRuns,int runLength,char * f_path){
+RunManager :: RunManager(int noOfRuns,int runLength,char * f_path){
     this->noOfRuns = noOfRuns;
     this->runLength = runLength;
     this->f_path = f_path;
