@@ -51,22 +51,22 @@ void BigQ :: Phase1()
 // sort runs from file using Run Manager
 void BigQ :: Phase2()
 {
-  int noOfRuns = 2;
-      int runLength = 2;
-      int totalPages = 3;
-      char * f_path = "../../dbfiles/part.bin";
-      RunManager runManager(noOfRuns,runLength,totalPages,f_path);
-      myTree = new TournamentTree(&runManager,this->myThreadData.sortorder);
-      Page * tempPage;
-      while(myTree->GetSortedPage(&tempPage)){
-          Record tempRecord;
-          while(tempPage->GetFirst(&tempRecord)){
-              Schema s("catalog","part");
-              tempRecord.Print(&s);
-              this->myThreadData.out->Insert(&tempRecord);
-          }
-          myTree->RefillOutputBuffer();
-      }
+    int noOfRuns = 10;
+    int runLength = 10;
+    char * f_path = "../../dbfiles/lineitem.bin";
+    RunManager runManager(noOfRuns,runLength,f_path);
+    myTree = new TournamentTree(&runManager,this->myThreadData.sortorder);
+    Page * tempPage;
+    while(myTree->GetSortedPage(&tempPage)){
+        Record tempRecord;
+        while(tempPage->GetFirst(&tempRecord)){
+//            Schema s("catalog","lineitem");
+//            tempRecord.Print(&s);
+            this->myThreadData.out->Insert(&tempRecord);
+        }
+        myTree->RefillOutputBuffer();
+    }
+
 }
 
 // constructor
@@ -259,12 +259,13 @@ bool TournamentTree :: GetSortedPage(Page ** page){
 
 
 // ------------------------------------------------------------------
-RunManager :: RunManager(int noOfRuns,int runLength,int totalPages,char * f_path){
+unManager :: RunManager(int noOfRuns,int runLength,char * f_path){
     this->noOfRuns = noOfRuns;
     this->runLength = runLength;
-    this->totalPages = totalPages;
     this->f_path = f_path;
     this->file.Open(1,this->f_path);
+    int totalPages = file.GetLength()-1;
+    this->totalPages = totalPages;
     int pageOffset = 0;
     for(int i = 0; i<noOfRuns;i++){
         RunFileObject fileObject;
