@@ -13,7 +13,7 @@ void BigQ :: Phase1()
 {
     Record tRec;
     Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);
-    
+
     // add 1 page for adding records
     long long int pageCount=0;
     tRun.AddPage();
@@ -42,10 +42,10 @@ void BigQ :: Phase1()
 // sort runs from file using Run Manager
 void BigQ :: Phase2()
 {
-    int noOfRuns = 10;
-    int runLength = 10;
-    char * f_path = "../../dbfiles/lineitem.bin";
-    RunManager runManager(noOfRuns,runLength,f_path);
+    // int totalRuns = 10;
+    // int runLen = 10;
+    // char * f_path = "../../dbfiles/lineitem.bin";
+    RunManager runManager(this->totalRuns,this->myThreadData.runLen,this->f_path);
     myTree = new TournamentTree(&runManager,this->myThreadData.sortorder);
     Page * tempPage;
     while(myTree->GetSortedPage(&tempPage)){
@@ -97,7 +97,7 @@ vector<Page*> Run::getPages() {
     return this->pages;
 }
 void Run::getPages(vector<Page*> * myPageVector) {
-    // myPageVector->swap(this->pages);
+    myPageVector->swap(this->pages);
 }
 bool Run::checkRunFull() {
     return this->pages.size() == this->runLength;

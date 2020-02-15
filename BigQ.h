@@ -112,6 +112,7 @@ class BigQ {
      int totalRuns;
      bool isLastRunComplete;
      DBFile myFile;
+     char * f_path;
      void Phase1();
      void Phase2();
 public:
