@@ -104,7 +104,7 @@ int DBFile::GetPageLocationToRead(BufferMode mode) {
 
 int DBFile::GetPageLocationToReWrite(){
     int pageLocation = myFile.GetLength();
-    return pageLocation == 2 ? 0 : pageLocation-1; 
+    return pageLocation == 2 ? 0 : pageLocation-2; 
 
 }
 
@@ -142,6 +142,10 @@ void DBFile::Add (Record &rec) {
 
     // set DBFile in write mode
     myPreference.pageBufferMode = WRITE;
+
+    if(myPage.getNumRecs()>0 && myPreference.allRecordsWritten){
+                    myPreference.reWriteFlag = true;
+    }
     
     // add record to current page 
     // check if the page is full
