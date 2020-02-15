@@ -11,41 +11,32 @@ void* BigQ :: Driver(void *p){
 }
 void BigQ :: Phase1()
 {
-
     Record tRec;
-    Page *tPage = new Page();                                           // for allocating memory to page
-    Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);   // intializing run
+    Run tRun(this->myThreadData.runlen,this->myThreadData.sortorder);
+    
+    // add 1 page for adding records
+    long long int pageCount=0;
+    tRun.AddPage();
 
     // read data from in pipe sort them into runlen pages
     while(this->myThreadData.in->Remove(&tRec)) {
-        if(!tPage->Append(&tRec)) {
+        if(!tRun.addRecordAtPage(pageCount, &tRec)) {
             if (tRun.checkRunFull()) {
-                // tRun.sortRunInternalPages();
+                tRun.sortRunInternalPages();
                 myTree = new TournamentTree(&tRun,this->myThreadData.sortorder);
                 tRun.writeRunToFile(&this->myFile);
-                tRun.clearPages();
+                tRun.clearPages();pageCount=-1;
             }
-            tRun.AddPage(tPage);
-            delete tPage;
-            tPage = new Page();
-            tPage->Append(&tRec);
+            tRun.AddPage();pageCount++;
+            tRun.addRecordAtPage(pageCount, &tRec);
         }
     }
-    if(tPage->getNumRecs()>0) {
-        if (tRun.checkRunFull()) {
-            // tRun.sortRunInternalPages();
-            tRun.clearPages();
-        }
-        tRun.AddPage(tPage);
-        // tRun.sortRunInternalPages();
-        tRun.writeRunToFile(&this->myFile);
-        delete tPage; // delete pointer
-    }
-    else if(tRun.getRunSize()!=0) {
-        // tRun.sortRunInternalPages();
+    if(tRun.getRunSize()!=0) {
+        tRun.sortRunInternalPages();
         tRun.writeRunToFile(&this->myFile);
         tRun.clearPages();
     }
+
 }
 
 // sort runs from file using Run Manager
@@ -85,19 +76,17 @@ BigQ::~BigQ () {
 }
 // ------------------------------------------------------------------
 
-
 // ------------------------------------------------------------------
 Run::Run(int runlen) {
     this->runLength = runlen;
     this->sortorder = NULL;
 }
-
 Run::Run(int runlen,OrderMaker * sortorder) {
     this->runLength = runlen;
     this->sortorder = sortorder;
 }
-void Run::AddPage(Page *p) {
-    this->pages.push_back(p);
+void Run::AddPage() {
+    this->pages.push_back(new Page());
 }
 void Run::sortRunInternalPages() {
     for(int i=0; i < pages.size(); i++) {
@@ -134,6 +123,9 @@ void Run::sortSinglePage(Page *p) {
             p->Append(t);
         }
     }
+}
+int Run::addRecordAtPage(long long int pageCount, Record *rec) {
+    return this->pages.at(pageCount)->Append(rec);
 }
 bool Run::writeRunToFile(DBFile *file) {
     //TODO::change second parameter to sorted

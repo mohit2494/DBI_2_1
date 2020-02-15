@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include<unordered_map>
 #include "Pipe.h"
 #include "File.h"
 #include "Record.h"
@@ -43,7 +44,8 @@ class Run {
     public:
         Run(int runLength);
         Run(int runLength,OrderMaker * sortorder);
-        void AddPage(Page *p);
+        void AddPage();
+        int addRecordAtPage(long long int pageCount, Record *rec);
         void sortRunInternalPages();
         bool checkRunFull();
         bool clearPages();
@@ -63,8 +65,8 @@ class CustomComparator{
     OrderMaker * myOrderMaker;
 public:
     CustomComparator(OrderMaker * sortorder);
-    bool operator()( Record* lhs,  Record* rhs);
-    bool operator()( QueueObject lhs,  QueueObject rhs);
+    bool operator()(Record* lhs,  Record* rhs);
+    bool operator()(QueueObject lhs,  QueueObject rhs);
 
 };
 // ------------------------------------------------------------------
