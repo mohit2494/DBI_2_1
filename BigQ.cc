@@ -51,8 +51,6 @@ void BigQ :: Phase2()
     while(myTree->GetSortedPage(&tempPage)){
         Record tempRecord;
         while(tempPage->GetFirst(&tempRecord)){
-        //    Schema s("catalog","part");
-        //    tempRecord.Print(&s);
             this->myThreadData.out->Insert(&tempRecord);
         }
         myTree->RefillOutputBuffer();
@@ -62,17 +60,10 @@ void BigQ :: Phase2()
 void BigQ::sortCompleteRun(Run *run) {
     myTree = new TournamentTree(run,this->myThreadData.sortorder);
     Page * tempPage;
-    // as run was swapped by tournament tree
-    // we need to allocate space for pages again
-    // these pages will be part of complete sorted run
-    // add 1 page for adding records
     while(myTree->GetSortedPage(&tempPage)){
-        cout<<tempPage->getNumRecs();
         Record tempRecord;
         Page * pushPage = new Page();
         while(tempPage->GetFirst(&tempRecord)){
-            //    Schema s("catalog","part");
-            //    tempRecord.Print(&s);
             pushPage->Append(&tempRecord);
         }
         run->AddPage(pushPage);
@@ -144,7 +135,7 @@ void Run::sortSinglePage(Page *p) {
         sort(records.begin(), records.end(), CustomComparator(this->sortorder));
         for(int i=0; i<records.size();i++) {
             Record *t = records.at(i);
-            // t->Print(new Schema("catalog","part"));
+            t->Print(new Schema("catalog","lineitem"));
             p->Append(t);
         }
     }
@@ -196,7 +187,6 @@ TournamentTree :: TournamentTree(RunManager * manager,OrderMaker * sortorder){
     Inititate();
 }
 void TournamentTree :: Inititate(){
-    // Schema s("catalog","part");
     if (!myPageVector.empty()){
         int runId = 0;
         for(vector<Page*>::iterator i = myPageVector.begin() ; i!=myPageVector.end() ; ++i){
@@ -233,7 +223,6 @@ void TournamentTree :: Inititate(){
 }
 
 void TournamentTree :: RefillOutputBuffer(){
-    // Schema s("catalog","part");
     if (!myPageVector.empty()){
         int runId = 0;
         while(!myQueue->empty()){
@@ -248,15 +237,11 @@ void TournamentTree :: RefillOutputBuffer(){
             if (!(topPage->GetFirst(topObject.record))){
                 if (isRunManagerAvailable&&myRunManager->getNextPageOfRun(topPage,topObject.runId)){
                     if(topPage->GetFirst(topObject.record)){
-//                        topObject.record->Print(&s);
-//                        cout<<topObject.runId;
                         myQueue->push(topObject);
                     }
                 }
             }
             else{
-//                topObject.record->Print(&s);
-//                cout<<topObject.runId;
                 myQueue->push(topObject);
             }
 
@@ -321,7 +306,6 @@ void  RunManager:: getPages(vector<Page*> * myPageVector){
 bool RunManager :: getNextPageOfRun(Page * page,int runNo){
     unordered_map<int,RunFileObject>::iterator runGetter = runLocation.find(runNo);
     if(!(runGetter == runLocation.end())){
-        cout<<runGetter->second.currentPage<<runGetter->second.endPage;
         this->file.GetPage(page,runGetter->second.currentPage);
         runGetter->second.currentPage+=1;
         if(runGetter->second.currentPage>runGetter->second.endPage){
@@ -345,6 +329,6 @@ bool CustomComparator :: operator ()( QueueObject lhs, QueueObject rhs){
 
 bool CustomComparator :: operator ()( Record* lhs,  Record* rhs){
     int val = myComparisonEngine.Compare(lhs,rhs,myOrderMaker);
-    return (val <=0)? true : false;
+    return (val <0)? true : false;
 }
 // ------------------------------------------------------------------
