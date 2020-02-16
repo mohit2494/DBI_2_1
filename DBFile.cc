@@ -23,7 +23,7 @@
 // }
 
 // off_t Preference::getCurrentPage() {
-// 		return this->currentPage;
+//         return this->currentPage;
 // }
 
 // void Preference::setCurrentPage(off_t currentPage) {
@@ -39,11 +39,11 @@
 // }
 
 // int Preference::getCurrentRecordPosition(){
-// 		return this->currentRecordPosition;
+//         return this->currentRecordPosition;
 // }
 
 // void Preference::setCurrentRecordPosition(int currentRecord) {
-// 		this->currentRecordPosition = currentRecord;
+//         this->currentRecordPosition = currentRecord;
 // }
 /**************** End of Preference Class ********************/
 
@@ -60,7 +60,7 @@ DBFile::~DBFile () {
 int DBFile::Create (const char *f_path, fType f_type, void *startup) {
     if (Utilities::checkfileExist(f_path)) {
         cout << "file you are about to create already exists!"<<endl;
-        return 0;    
+        return 0;
     }
     // check if the file type is correct
     if (f_type == heap){
@@ -77,11 +77,11 @@ int DBFile::Create (const char *f_path, fType f_type, void *startup) {
 
             // opening file with given file extension
             myFile.Open(0,(char *)f_path);
-            
+
             // loading preferences
             //Utilities::Log("File path before calling LoadPreference ");
             //Utilities::Log(string(finalString));
-            LoadPreference(finalString);            
+            LoadPreference(finalString);
             isFileOpen = true;
             return 1;
     }
@@ -104,29 +104,29 @@ int DBFile::GetPageLocationToRead(BufferMode mode) {
 
 int DBFile::GetPageLocationToReWrite(){
     int pageLocation = myFile.GetLength();
-    return pageLocation == 2 ? 0 : pageLocation-2; 
+    return pageLocation == 2 ? 0 : pageLocation-2;
 
 }
 
 /**
-    In order to add records to the file, 
-    the function Add is used. In the case of 
-    the unordered heap file that you are implementing 
-    in this assignment, this function simply adds the 
+    In order to add records to the file,
+    the function Add is used. In the case of
+    the unordered heap file that you are implementing
+    in this assignment, this function simply adds the
     new record to the end of the file
-    Note that this function should actually consume addMe, 
+    Note that this function should actually consume addMe,
     so that after addMe has been put into the file, it cannot
-    be used again. There are then two functions that allow 
-    for record retrieval from a DBFile instance; all are 
-    called Next. 
+    be used again. There are then two functions that allow
+    for record retrieval from a DBFile instance; all are
+    called Next.
 **/
 void DBFile::Add (Record &rec) {
-    
+
     if (!isFileOpen){
         cerr << "Trying to load a file which is not open!";
         exit(1);
     }
-    
+
      // Flush the page data from which you are reading and load the last page to start appending records.
      if (myPreference.pageBufferMode == READ ) {
             if( myPage.getNumRecs() > 0){
@@ -137,7 +137,6 @@ void DBFile::Add (Record &rec) {
             myPreference.currentPage = GetPageLocationToReWrite();
             myPreference.currentRecordPosition = myPage.getNumRecs();
             myPreference.reWriteFlag = true;
-
     }
 
     // set DBFile in write mode
@@ -146,13 +145,13 @@ void DBFile::Add (Record &rec) {
     if(myPage.getNumRecs()>0 && myPreference.allRecordsWritten){
                     myPreference.reWriteFlag = true;
     }
-    
-    // add record to current page 
+
+    // add record to current page
     // check if the page is full
     if(!this->myPage.Append(&rec)) {
-        
-//        cout << "DBFile page full, writing to disk ...." << myFile.GetLength() << endl;
-    
+
+        //cout << "DBFile page full, writing to disk ...." << myFile.GetLength() << endl;
+
         // if page is full, then write page to disk. Check if the date needs to rewritten or not
         if (myPreference.reWriteFlag){
             this->myFile.AddPage(&this->myPage,GetPageLocationToReWrite());
@@ -161,7 +160,7 @@ void DBFile::Add (Record &rec) {
         else{
             this->myFile.AddPage(&this->myPage,GetPageLocationToWrite());
         }
-        
+
         // empty page
         this->myPage.EmptyItOut();
 
@@ -174,12 +173,12 @@ void DBFile::Add (Record &rec) {
 
 /**
  * the Load function bulk loads the DBFile instance from a text file,
- * appending new data to it using the SuckNextRecord function from 
- * Record.h. The character string passed to Load is the name of the 
- * data file to bulk load. 
+ * appending new data to it using the SuckNextRecord function from
+ * Record.h. The character string passed to Load is the name of the
+ * data file to bulk load.
 **/
 void DBFile::Load (Schema &f_schema, const char *loadpath) {
-    
+
     if (!isFileOpen){
         cerr << "Trying to load a file which is not open!";
         exit(1);
@@ -199,16 +198,16 @@ void DBFile::Load (Schema &f_schema, const char *loadpath) {
     }
     // set DBFile in WRITE Mode
     myPreference.pageBufferMode = WRITE;
-    FILE *tableFile = fopen (loadpath, "r"); 
+    FILE *tableFile = fopen (loadpath, "r");
     // while there are records, keep adding them to the DBFile. Reuse Add function.
     while(temp.SuckNextRecord(&f_schema, tableFile)==1) {
         Add(temp);
     }
-    
+
 }
 
 int DBFile::Open (const char *f_path) {
-    
+
     if (!Utilities::checkfileExist(f_path)) {
         cout << "Trying to open a file which is not created yet!"<<endl;
         return 0;
@@ -230,7 +229,7 @@ int DBFile::Open (const char *f_path) {
     // loading preferences
     //Utilities::Log("File path before calling LoadPreference ");
     //Utilities::Log(string(finalString));
-    LoadPreference(finalString);            
+    LoadPreference(finalString);
 
     if(myFile.IsFileOpen()){
         isFileOpen = true;
@@ -269,9 +268,9 @@ void DBFile::MoveFirst () {
 }
 
 /**
-	Next, Close simply closes the file. The return value is a 1
+    Next, Close simply closes the file. The return value is a 1
     on success and a zero on failure.
-**/ 
+**/
 int DBFile::Close () {
     if (!isFileOpen) {
         cout << "trying to close a file which is not open!"<<endl;
@@ -298,7 +297,7 @@ int DBFile::Close () {
         }
         myFile.Close();
     }
-    
+
     isFileOpen = false;
     DumpPreference();
     return 1;
@@ -370,18 +369,18 @@ void DBFile::LoadPreference(char * newFilePath) {
     ifstream file;
     if (Utilities::checkfileExist(newFilePath)) {
         //Utilities::Log("Opening preference file located at : "+ std::string(newFilePath));
-        file.open(newFilePath,ios::in); 
+        file.open(newFilePath,ios::in);
         if(!file){
             //Utilities::Log("Error opening preference file at : "+ std::string(newFilePath));
             cerr<<"Error in opening file..";
             exit(1);
         }
         file.read((char*)&myPreference,sizeof(Preference));
-        myPreference.preferenceFilePath = (char*)malloc(strlen(newFilePath) + 1); 
+        myPreference.preferenceFilePath = (char*)malloc(strlen(newFilePath) + 1);
         strcpy(myPreference.preferenceFilePath,newFilePath);
     }
     else {
-        myPreference.preferenceFilePath = (char*) malloc(strlen(newFilePath) + 1); 
+        myPreference.preferenceFilePath = (char*) malloc(strlen(newFilePath) + 1);
         strcpy(myPreference.preferenceFilePath,newFilePath);
         myPreference.currentPage = 0;
         myPreference.currentRecordPosition = 0;

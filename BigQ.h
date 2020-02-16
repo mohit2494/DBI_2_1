@@ -47,15 +47,13 @@ class Run {
         void AddPage();
         void AddPage(Page *p);
         int addRecordAtPage(long long int pageCount, Record *rec);
-        void sortRunInternalPages();
         bool checkRunFull();
         bool clearPages();
         int getRunSize();
         vector<Page*> getPages();
         void getPages(vector<Page*> * pagevector);
-        void sortSinglePage(Page *p);
         bool customRecordComparator(Record &left, Record &right);
-        bool writeRunToFile(DBFile *file);
+        int writeRunToFile(File *file);
 };
 // ------------------------------------------------------------------
 
@@ -81,7 +79,7 @@ class RunManager{
     char * f_path;
     unordered_map<int,RunFileObject> runLocation;
 public:
-    RunManager(int noOfRuns,int runLength,char * f_path);
+    RunManager(int runLength,char * f_path);
     void getPages(vector<Page*> * myPageVector);
     bool getNextPageOfRun(Page * page,int runNo);
 };
@@ -97,11 +95,14 @@ class TournamentTree{
     bool isRunManagerAvailable;
     priority_queue<QueueObject,vector<QueueObject>,CustomComparator> * myQueue;
     void Inititate();
+    void InititateForRun();
 public:
     TournamentTree(Run * run,OrderMaker * sortorder);
     TournamentTree(RunManager * manager,OrderMaker * sortorder);
     void RefillOutputBuffer();
     bool GetSortedPage(Page * *p);
+    void RefillOutputBufferForRun();
+    bool GetSortedPageForRun(Page * *p);
 };
 // ------------------------------------------------------------------
 
@@ -112,7 +113,7 @@ class BigQ {
      pthread_t myThread;
      int totalRuns;
      bool isLastRunComplete;
-     DBFile myFile;
+     File myFile;
      char * f_path;
      void Phase1();
      void Phase2();
