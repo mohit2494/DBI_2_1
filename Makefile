@@ -59,7 +59,7 @@ clean:
 	rm -f lex.yy.c
 	rm -f y.tab.h
 	rm -f *.xbin
-	rm -f dbfile/*.bin
-	rm -f dbfile/*.bigq
-	rm -f dbfile/*.pref
+	rm -f dbfiles/*.bin
+	rm -f dbfiles/*.bigq
+	rm -f dbfiles/*.pref
 	rm -f output1.txt
