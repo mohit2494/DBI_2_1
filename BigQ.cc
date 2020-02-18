@@ -379,6 +379,26 @@ bool RunManager :: getNextPageOfRun(Page * page,int runNo){
     }
     return false;
 }
+RunManager :: ~RunManager(){
+    myFile.Close();
+}
+
+int RunManager :: getNoOfRuns()
+{
+  return this.noOfRuns;
+}
+
+
+int RunManager ::getRunLength()
+{
+  return this.runLength;
+}
+
+int RunManager :: getTotalPages()
+{
+  return this.totalPages;
+}
+
 // ------------------------------------------------------------------
 
 
