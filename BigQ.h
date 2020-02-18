@@ -100,6 +100,9 @@ public:
     void getPages(vector<Page*> * myPageVector);
 //  Function to get Next Page for a particular Run
     bool getNextPageOfRun(Page * page,int runNo);
+    ~RunManager()
+
+
 };
 // ------------------------------------------------------------------
 

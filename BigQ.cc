@@ -379,6 +379,10 @@ bool RunManager :: getNextPageOfRun(Page * page,int runNo){
     }
     return false;
 }
+RunManager :: ~RunManager(){
+    myFile.Close();
+}
+
 // ------------------------------------------------------------------
 
 
