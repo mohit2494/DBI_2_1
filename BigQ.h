@@ -37,13 +37,13 @@ typedef struct {
 // ------------------------------------------------------------------
 
 // ------------------------------------------------------------------
-class Run {
+class run {
     int runLength;
     OrderMaker * sortorder;
     vector <Page *> pages;
     public:
-        Run(int runLength);
-        Run(int runLength,OrderMaker * sortorder);
+        run(int runLength);
+        run(int runLength,OrderMaker * sortorder);
         void AddPage();
         void AddPage(Page *p);
         int addRecordAtPage(long long int pageCount, Record *rec);
@@ -72,9 +72,6 @@ public:
 
 // ------------------------------------------------------------------
 class RunManager{
-    int noOfRuns;
-    int runLength;
-    int totalPages;
     File file;
     char * f_path;
     unordered_map<int,RunFileObject> runLocation;
@@ -82,6 +79,7 @@ public:
     RunManager(int runLength,char * f_path);
     void getPages(vector<Page*> * myPageVector);
     bool getNextPageOfRun(Page * page,int runNo);
+
 };
 // ------------------------------------------------------------------
 
@@ -97,7 +95,7 @@ class TournamentTree{
     void Inititate();
     void InititateForRun();
 public:
-    TournamentTree(Run * run,OrderMaker * sortorder);
+    TournamentTree(run * run,OrderMaker * sortorder);
     TournamentTree(RunManager * manager,OrderMaker * sortorder);
     void RefillOutputBuffer();
     bool GetSortedPage(Page * *p);
@@ -118,11 +116,10 @@ class BigQ {
      void Phase1();
      void Phase2();
 public:
-    void sortCompleteRun(Run *r);
+    void sortCompleteRun(run *run, OrderMaker *sortorder);
     static void* Driver(void*);
     BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
     ~BigQ ();
 };
 // ------------------------------------------------------------------
-
 #endif
