@@ -1,5 +1,3 @@
-#include "DBFile.h"
-#include "Schema.h"
 #include <string.h>
 #include <gtest/gtest.h>
 #include "test.h"
@@ -80,10 +78,12 @@ TEST(RunManager, getNextPage) {
     Page *page;
     ASSERT_FALSE(rm.getNextPageOfRun(page,1));
 }
-// comparing records using the customRecordComparator
+
 TEST(customRecordComparator, customRecordComparator) {
-    
-    
+    TestHelper th;
+    RunManager rm(1,"temp.xbin");
+    ASSERT_GE(rm.getNoOfRuns()*rm.getRunLength(),rm.getTotalPages());
+    th.deleteFile("temp.xbin");
 }
 // -------------------------------------------------------------------------------------------------------------
 int main(int argc, char **argv) {

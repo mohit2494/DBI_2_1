@@ -86,6 +86,9 @@ public:
 // ------------------------------------------------------------------
 // Class is used to fetch
 class RunManager{
+    int noOfRuns;
+    int runLength;
+    int totalPages;
     File file;
     char * f_path;
     unordered_map<int,RunFileObject> runLocation;
@@ -145,18 +148,14 @@ class BigQ {
      void Phase1();
 //   function to implement phase2 of TPMMS algorithm
      void Phase2();
-//   function to sort runs
-     void sortCompleteRun(Run *r);
+
 public:
     void sortCompleteRun(run *run, OrderMaker *sortorder);
-    static void* Driver(void*);
-    BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
-    ~BigQ ();
-//   public static function to drive the TPMMS algorithm.
+    //   public static function to drive the TPMMS algorithm.
      static void* Driver(void*);
-//   constructor
+    //   constructor
      BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
-//   destructor
+    //   destructor
      ~BigQ ();
 };
 // ------------------------------------------------------------------

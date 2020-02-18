@@ -380,23 +380,23 @@ bool RunManager :: getNextPageOfRun(Page * page,int runNo){
     return false;
 }
 RunManager :: ~RunManager(){
-    myFile.Close();
+    file.Close();
 }
 
 int RunManager :: getNoOfRuns()
 {
-  return this.noOfRuns;
+  return noOfRuns;
 }
 
 
 int RunManager ::getRunLength()
 {
-  return this.runLength;
+  return runLength;
 }
 
 int RunManager :: getTotalPages()
 {
-  return this.totalPages;
+  return totalPages;
 }
 
 // ------------------------------------------------------------------
